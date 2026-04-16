@@ -1,0 +1,208 @@
+import sqlite3
+
+# Connect Database
+conn = sqlite3.connect("student_erp.db")
+cursor = conn.cursor()
+
+# Create Tables
+cursor.execute('''CREATE TABLE IF NOT EXISTS students (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    age INTEGER,
+    course TEXT
+)''')
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS attendance (
+    student_id INTEGER,
+    date TEXT,
+    status TEXT
+)''')
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS marks (
+    student_id INTEGER,
+    subject TEXT,
+    marks INTEGER
+)''')
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS fees (
+    student_id INTEGER,
+    paid INTEGER,
+    due INTEGER
+)''')
+
+conn.commit()
+
+# ---------------- LOGIN ----------------
+def login():
+    username = input("Enter Username: ")
+    password = input("Enter Password: ")
+
+    if username == "admin" and password == "1234":
+        print("Login Successful\n")
+        return True
+    else:
+        print("Invalid Login\n")
+        return False
+
+
+# ---------------- STUDENT MODULE ----------------
+def add_student():
+    name = input("Enter Name: ")
+    age = int(input("Enter Age: "))
+    course = input("Enter Course: ")
+
+    cursor.execute("INSERT INTO students (name, age, course) VALUES (?, ?, ?)", (name, age, course))
+    conn.commit()
+    print("Student Added Successfully\n")
+
+
+def view_students():
+    cursor.execute("SELECT * FROM students")
+    data = cursor.fetchall()
+
+    print("\n--- Student List ---")
+    for row in data:
+        print(row)
+
+
+def update_student():
+    sid = int(input("Enter Student ID: "))
+    name = input("Enter New Name: ")
+    age = int(input("Enter New Age: "))
+    course = input("Enter New Course: ")
+
+    cursor.execute("UPDATE students SET name=?, age=?, course=? WHERE id=?", (name, age, course, sid))
+    conn.commit()
+    print("Student Updated\n")
+
+
+def delete_student():
+    sid = int(input("Enter Student ID: "))
+    cursor.execute("DELETE FROM students WHERE id=?", (sid,))
+    conn.commit()
+    print("Student Deleted\n")
+
+
+# ---------------- ATTENDANCE ----------------
+def mark_attendance():
+    sid = int(input("Enter Student ID: "))
+    date = input("Enter Date (DD-MM-YYYY): ")
+    status = input("Enter Status (Present/Absent): ")
+
+    cursor.execute("INSERT INTO attendance VALUES (?, ?, ?)", (sid, date, status))
+    conn.commit()
+    print("Attendance Recorded\n")
+
+
+def view_attendance():
+    sid = int(input("Enter Student ID: "))
+    cursor.execute("SELECT * FROM attendance WHERE student_id=?", (sid,))
+    data = cursor.fetchall()
+
+    for row in data:
+        print(row)
+
+
+# ---------------- MARKS ----------------
+def add_marks():
+    sid = int(input("Enter Student ID: "))
+    subject = input("Enter Subject: ")
+    marks = int(input("Enter Marks: "))
+
+    cursor.execute("INSERT INTO marks VALUES (?, ?, ?)", (sid, subject, marks))
+    conn.commit()
+    print("Marks Added\n")
+
+
+def view_marks():
+    sid = int(input("Enter Student ID: "))
+    cursor.execute("SELECT subject, marks FROM marks WHERE student_id=?", (sid,))
+    data = cursor.fetchall()
+
+    total = 0
+    for sub, mark in data:
+        print(sub, ":", mark)
+        total += mark
+
+    if data:
+        avg = total / len(data)
+        print("Average:", avg)
+
+
+# ---------------- FEES ----------------
+def manage_fees():
+    sid = int(input("Enter Student ID: "))
+    paid = int(input("Enter Paid Amount: "))
+    due = int(input("Enter Due Amount: "))
+
+    cursor.execute("DELETE FROM fees WHERE student_id=?", (sid,))
+    cursor.execute("INSERT INTO fees VALUES (?, ?, ?)", (sid, paid, due))
+    conn.commit()
+
+    print("Fees Updated\n")
+
+
+def view_fees():
+    sid = int(input("Enter Student ID: "))
+    cursor.execute("SELECT * FROM fees WHERE student_id=?", (sid,))
+    data = cursor.fetchone()
+
+    if data:
+        print("Paid:", data[1], "Due:", data[2])
+    else:
+        print("No fee record found")
+
+
+# ---------------- MAIN MENU ----------------
+def main():
+    if not login():
+        return
+
+    while True:
+        print("\n--- STUDENT ERP MENU ---")
+        print("1. Add Student")
+        print("2. View Students")
+        print("3. Update Student")
+        print("4. Delete Student")
+        print("5. Mark Attendance")
+        print("6. View Attendance")
+        print("7. Add Marks")
+        print("8. View Marks")
+        print("9. Manage Fees")
+        print("10. View Fees")
+        print("0. Exit")
+
+        choice = int(input("Enter choice: "))
+
+        if choice == 1:
+            add_student()
+        elif choice == 2:
+            view_students()
+        elif choice == 3:
+            update_student()
+        elif choice == 4:
+            delete_student()
+        elif choice == 5:
+            mark_attendance()
+        elif choice == 6:
+            view_attendance()
+        elif choice == 7:
+            add_marks()
+        elif choice == 8:
+            view_marks()
+        elif choice == 9:
+            manage_fees()
+        elif choice == 10:
+            view_fees()
+        elif choice == 0:
+            print("Exiting...")
+            break
+        else:
+            print("Invalid choice")
+
+
+# Run Program
+main()
+
+# Close DB
+conn.close()
